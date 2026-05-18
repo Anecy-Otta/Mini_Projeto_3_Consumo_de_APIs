@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Gallery</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
+  header { background: #1a1a1a; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  h1 { font-size: 1.4rem; }
+  .btn { background: #c8872a; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+  .btn:hover { background: #a86f20; }
+  .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+  .upload-area { border: 2px dashed #c8872a; border-radius: 12px; padding: 2rem; text-align: center; background: #fff; cursor: pointer; margin-bottom: 2rem; }
+  .upload-area:hover { background: #fff8f0; }
+  .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .foto-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .foto-card img { width: 100%; height: 160px; object-fit: cover; display: block; }
+  .foto-info { padding: 0.6rem; }
+  .foto-info p { font-size: 0.75rem; color: #666; margin-bottom: 0.4rem; }
+  .btn-deletar { background: #c0614a; color: #fff; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; width: 100%; }
+  .vazio { text-align: center; color: #999; padding: 3rem; }
+  #file-input { display: none; }
+  .mensagem { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: none; }
+  .sucesso { background: #d4edda; color: #155724; }
+  .erro { background: #f8d7da; color: #721c24; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📷 The Gallery</h1>
+  <button class="btn" onclick="document.getElementById('file-input').click()">+ Adicionar Foto</button>
+</header>
+<input type="file" id="file-input" accept="image/*" onchange="uploadFoto(this.files[0])">
+<div class="container">
+  <div class="upload-area" onclick="document.getElementById('file-input').click()">
+    <p style="font-size:2rem">🖼️</p>
+    <p style="margin-top:0.5rem">Arraste uma foto aqui ou clique para selecionar</p>
+    <p style="font-size:0.8rem; color:#999; margin-top:0.3rem">JPG, PNG, GIF, WEBP</p>
+  </div>
+  <div class="mensagem" id="mensagem"></div>
+  <div class="galeria" id="galeria"><div class="vazio">Carregando fotos...</div></div>
+</div>
+<script>
+  async function carregarFotos() {
+    const r = await fetch('/fotos');
+    const data = await r.json();
+    const galeria = document.getElementById('galeria');
+    if (data.fotos.length === 0) {
+      galeria.innerHTML = '<div class="vazio">Nenhuma foto ainda. Adicione a primeira!</div>';
+      return;
+    }
+    galeria.innerHTML = data.fotos.map(f => `
+      <div class="foto-card" id="card-${f.id}">
+        <img src="${f.url}" alt="${f.filename}">
+        <div class="foto-info">
+          <p>${f.uploaded_at}</p>
+          <p>${(f.size / 1024).toFixed(0)} KB</p>
+          <button class="btn-deletar" onclick="deletarFoto('${f.id}')">🗑 Remover</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  async function uploadFoto(file) {
+    if (!file) return;
+    const form = new FormData();
+    form.append('file', file);
+    mostrarMensagem('Enviando...', 'sucesso');
+    const r = await fetch('/upload', { method: 'POST', body: form });
+    if (r.ok) {
+      mostrarMensagem('✓ Foto enviada com sucesso!', 'sucesso');
+      carregarFotos();
+    } else {
+      mostrarMensagem('Erro ao enviar foto.', 'erro');
+    }
+    document.getElementBy
