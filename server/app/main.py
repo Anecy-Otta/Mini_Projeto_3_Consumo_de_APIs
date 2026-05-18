@@ -53,5 +53,12 @@ def deletar_foto(photo_id: str):
             return {"deletada": True, "id": photo_id}
     raise HTTPException(status_code=404, detail="Foto não encontrada")
 
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    with open("static/index.html") as f:
+        return f.read()
+
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
